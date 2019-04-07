@@ -4,12 +4,37 @@
 
 # Structure of data
 #  https://www.kaggle.com/uciml/biomechanical-features-of-orthopedic-patients/downloads/biomechanical-features-of-orthopedic-patients.zip/1
-#https://www.kaggle.com/uciml/biomechanical-features-of-orthopedic-patients
 
-dl <- tempfile()
-download.file("https://www.kaggle.com/uciml/biomechanical-features-of-orthopedic-patients/downloads/biomechanical-features-of-orthopedic-patients.zip/1", dl)  
+  
+#Read Local data is downloaded from  "https://www.kaggle.com/uciml/biomechanical-features-of-orthopedic-patients"
+#Data_3class <- read.csv(file="column_3C_weka.csv", header=TRUE, sep=",")
 
-Data_3class <- read.csv(file="column_3C_weka.csv", header=TRUE, sep=",")
+#from my github repository
+require(RCurl)
+require(foreign)
+url <- "https://raw.githubusercontent.com/HadiYolasigmaz/Harvard_Datascience_2/master/column_3C_weka.csv"
+
+data_from_web <- getURL(url)  
+data_lines  <- strsplit(data_from_web, split="\r\n")
+data_count <- length(data_lines[[1]])
+Data_3class <- data.frame(pelvic_incidence=double(),pelvic_tilt=double(),
+                          lumbar_lordosis_angle=double(),sacral_slope=double(),
+                          pelvic_radius= double(),degree_spondylolisthesis=double(),
+                          class =character(), stringsAsFactors = FALSE)
+for(i in 2:data_count) {
+  data_columns  <- strsplit(data_lines[[1]][i], split=",")
+  typeof(as.numeric(data_columns[[1]][1]))
+  Data_3class[i-1,] <- c(data_columns[[1]][1],data_columns[[1]][2],data_columns[[1]][3],data_columns[[1]][4],data_columns[[1]][5],data_columns[[1]][6],toString(data_columns[[1]][7]))
+}
+Data_3class <-transform(Data_3class, pelvic_incidence = as.double(pelvic_incidence), 
+          pelvic_tilt = as.double(pelvic_tilt),
+          lumbar_lordosis_angle = as.numeric(lumbar_lordosis_angle),
+          sacral_slope = as.numeric(sacral_slope),
+          pelvic_radius = as.numeric(pelvic_radius),
+          degree_spondylolisthesis = as.numeric(degree_spondylolisthesis)
+          )
+Data_3class
+#structure of data
 str(Data_3class)
 
 # Summary of data
@@ -46,6 +71,7 @@ y <- Data_3class$class
 set.seed(1)
 test_index <- createDataPartition(y, times = 1, p = 0.5, list = FALSE)
 train_set <- Data_3class %>% slice(-test_index)
+train_set
 test_set <- Data_3class %>% slice(test_index)
 # Classification (decision) trees.
 require(rpart.plot)
@@ -88,3 +114,5 @@ rf.train_set
 #Accuracy is better as expected.
 train_rf <- randomForest(class ~ ., data=train_set)
 confusionMatrix(predict(train_rf, test_set), test_set$class)$overall["Accuracy"]
+
+
