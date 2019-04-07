@@ -10,6 +10,7 @@
 #Data_3class <- read.csv(file="column_3C_weka.csv", header=TRUE, sep=",")
 
 #from my github repository
+require(dplyr)
 require(RCurl)
 require(foreign)
 url <- "https://raw.githubusercontent.com/HadiYolasigmaz/Harvard_Datascience_2/master/column_3C_weka.csv"
@@ -33,7 +34,6 @@ Data_3class <-transform(Data_3class, pelvic_incidence = as.double(pelvic_inciden
           pelvic_radius = as.numeric(pelvic_radius),
           degree_spondylolisthesis = as.numeric(degree_spondylolisthesis)
           )
-Data_3class
 #structure of data
 str(Data_3class)
 
@@ -70,8 +70,8 @@ require(caret)
 y <- Data_3class$class
 set.seed(1)
 test_index <- createDataPartition(y, times = 1, p = 0.5, list = FALSE)
+
 train_set <- Data_3class %>% slice(-test_index)
-train_set
 test_set <- Data_3class %>% slice(test_index)
 # Classification (decision) trees.
 require(rpart.plot)
@@ -94,25 +94,17 @@ branch.lty=10, shadow.col="gray", nn=TRUE)
 #and so on.
 
 #cp is selected  as 0.01 by controlling accuracy with respect to below approach.    
-train_rpart <- train(class ~ .,  method = "rpart",
-tuneGrid = data.frame(cp = seq(0, 0.05, len = 50)),
-data = train_set)
+train_rpart <- train(class ~ .,  method = "rpart",tuneGrid = data.frame(cp = seq(0, 0.05, len = 50)),data = train_set)
+
 ggplot(train_rpart)
 #And Accuracy is 
-confusionMatrix(predict(train_rpart, test_set),test_set$class)$overall["Accuracy"]
+confusionMatrix(table(predict(train_rpart, test_set),test_set$class))$overall["Accuracy"]
 #random forest
 require(randomForest)
-fit <- randomForest(class~., data = Data_3class, ntree=500, proximity=T) 
-plot(fit)
-fit.legend <- colnames(Data_3class)
-legend("top", cex =0.3, legend=fit.legend, lty=c(1,2,3,4,5,6,7), col=c(1,2,3,4,5,6,7), horiz=T)
-#lowest err.rate. It is 100.
-which.min(fit$err.rate[,1])
-suppressMessages(library(randomForest))
-rf.train_set <-randomForest(class ~., data=train_set)
-rf.train_set
 #Accuracy is better as expected.
 train_rf <- randomForest(class ~ ., data=train_set)
 confusionMatrix(predict(train_rf, test_set), test_set$class)$overall["Accuracy"]
+
+
 
 
