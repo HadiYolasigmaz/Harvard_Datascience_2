@@ -10,6 +10,17 @@
 #Data_3class <- read.csv(file="column_3C_weka.csv", header=TRUE, sep=",")
 
 #from my github repository
+#install.packages("dplyr")
+#install.packages("RCurl")
+#install.packages("foreign")
+#install.packages("ggplot2")
+#install.packages("gridExtra")
+#install.packages("GGally")
+#install.packages("caret")
+#install.packages("rpart.plot")
+### in any condition if required  is not installed you can install packages by above install.packages function line.
+
+
 require(dplyr)
 require(RCurl)
 require(foreign)
@@ -34,6 +45,7 @@ Data_3class <-transform(Data_3class, pelvic_incidence = as.double(pelvic_inciden
           pelvic_radius = as.numeric(pelvic_radius),
           degree_spondylolisthesis = as.numeric(degree_spondylolisthesis)
           )
+Data_3class[, 'class'] <- as.factor(Data_3class[, 'class'])
 #structure of data
 str(Data_3class)
 
@@ -47,6 +59,7 @@ head(Data_3class)
 ## Distribution of Patients in 3 class items dataset
 require(ggplot2)
 require(gridExtra)
+
 ggplot(Data_3class,aes(x=class,fill=class))+geom_bar(stat = 'count')+labs(x = 'Distribution of patients') +
   geom_label(stat='count',aes(label=..count..), size=4) +theme_dark(base_size = 12)
 require(GGally)
@@ -65,8 +78,8 @@ corrplot(corr_mat, method = "number")
 
 ### Machine learning techniques
 # Prepare Train set and test set
-require(dplyr)
 require(caret)
+
 y <- Data_3class$class
 set.seed(1)
 test_index <- createDataPartition(y, times = 1, p = 0.5, list = FALSE)
@@ -75,6 +88,7 @@ train_set <- Data_3class %>% slice(-test_index)
 test_set <- Data_3class %>% slice(test_index)
 # Classification (decision) trees.
 require(rpart.plot)
+
 class.tree <- rpart(Data_3class$class~.,data = Data_3class,control = rpart.control(cp = 0.01))
 rpart.plot(class.tree, 
 box.palette="GnBu",
@@ -101,10 +115,18 @@ ggplot(train_rpart)
 confusionMatrix(table(predict(train_rpart, test_set),test_set$class))$overall["Accuracy"]
 #random forest
 require(randomForest)
+
+fit <- randomForest(class~., data = Data_3class, ntree=500, proximity=T) 
+plot(fit)
+fit.legend <- colnames(Data_3class)
+legend("top", cex =0.3, legend=fit.legend, lty=c(1,2,3,4,5,6,7), col=c(1,2,3,4,5,6,7), horiz=T)
+#lowest err.rate. It is 100.
+which.min(fit$err.rate[,1])
+suppressMessages(library(randomForest))
+rf.train_set <-randomForest(class ~., data=train_set)
+rf.train_set
 #Accuracy is better as expected.
 train_rf <- randomForest(class ~ ., data=train_set)
 confusionMatrix(predict(train_rf, test_set), test_set$class)$overall["Accuracy"]
-
-
 
 
